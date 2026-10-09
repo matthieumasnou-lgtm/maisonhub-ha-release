@@ -1,5 +1,5 @@
 name: Maison Hub Lab
-version: 0.6.2
+version: 0.6.3
 slug: maisonhub
 description: Prototype local de messages, réservé aux administrateurs Home Assistant
 arch:
