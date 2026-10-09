@@ -2,6 +2,10 @@ import os, sqlite3, json, datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 from threading import Lock
+from collections import deque
+import time
+POST_TIMES = deque()
+MAX_POSTS_PER_MINUTE = 12
 DB_LOCK = Lock()
 DB='/data/maisonhub.db'
 os.makedirs('/data',exist_ok=True)
@@ -27,7 +31,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_error(404)
         return self.respond(200,'text/html; charset=utf-8',PAGE.encode())
     def do_POST(self):
-        if not urlparse(self.path).path.endswith('/api/messages'):
+        if not urlparse(self.path).path.rstrip('/').endswith('/api/messages'):
             return self.send_error(404)
         if self.headers.get('X-MaisonHub-Request') != '1' or self.headers.get('Sec-Fetch-Site','same-origin') not in ('same-origin','none'):
             return self.send_error(403)
@@ -43,7 +47,14 @@ class Handler(BaseHTTPRequestHandler):
             if not 1<=len(text)<=1000: raise ValueError('text')
         except (ValueError,KeyError,TypeError,AttributeError):
             return self.send_error(400)
-        with DB_LOCK, sqlite3.connect(DB) as db:
-            db.execute('INSERT INTO messages(text,created) VALUES (?,?)',(text,datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='minutes')))
+        with DB_LOCK:
+            now = time.monotonic()
+            while POST_TIMES and now - POST_TIMES[0] > 60:
+                POST_TIMES.popleft()
+            if len(POST_TIMES) >= MAX_POSTS_PER_MINUTE:
+                return self.send_error(429, 'Rate limit')
+            with sqlite3.connect(DB) as db:
+                db.execute('INSERT INTO messages(text,created) VALUES (?,?)',(text,datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='minutes')))
+            POST_TIMES.append(now)
         self.respond(201,'application/json',b'{"ok":true}')
 ThreadingHTTPServer(('0.0.0.0',8099),Handler).serve_forever()
