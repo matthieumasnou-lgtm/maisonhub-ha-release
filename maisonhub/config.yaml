@@ -1,5 +1,5 @@
 name: Maison Hub Lab
-version: 0.6.1
+version: 0.6.2
 slug: maisonhub
 description: Prototype local de messages, réservé aux administrateurs Home Assistant
 arch:
@@ -13,6 +13,3 @@ panel_icon: mdi:home-heart
 panel_title: Maison Hub Lab
 panel_admin: true
 stage: experimental
-map:
-  - type: data
-    read_only: false
