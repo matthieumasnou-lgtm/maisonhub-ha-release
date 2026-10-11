@@ -1,0 +1,18 @@
+name: Nextcloud isolated ARM64 - TEST ONLY
+slug: nextcloud_isolated_pi_lab
+version: 0.1.0
+description: "Isolated Nextcloud Supervisor startup lab; no Ingress, no public ports, no personal data"
+arch:
+  - aarch64
+startup: application
+boot: manual
+init: false
+stage: experimental
+ingress: false
+panel_admin: true
+hassio_api: false
+homeassistant_api: false
+auth_api: false
+host_network: false
+privileged: []
+full_access: false
